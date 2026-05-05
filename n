@@ -1,0 +1,1361 @@
+-------------------------------------
+Bayssain networks 
+------------------------------------
+
+from pgmpy.models import BayesianNetwork
+from pgmpy.factors.discrete import TabularCPD
+from pgmpy.inference import VariableElimination
+
+# Structure
+model = BayesianNetwork([
+    ('Intelligence', 'Grade'),
+    ('StudyHours', 'Grade'),
+    ('Difficulty', 'Grade'),
+    ('Grade', 'Pass')
+])
+
+# Priors
+cpd_I = TabularCPD(variable='Intelligence', variable_card=2,
+                   values=[[0.7], [0.3]])
+
+cpd_S = TabularCPD(variable='StudyHours', variable_card=2,
+                   values=[[0.6], [0.4]])
+
+cpd_D = TabularCPD(variable='Difficulty', variable_card=2,
+                   values=[[0.4], [0.6]])
+
+# Grade CPT
+cpd_G = TabularCPD(
+    variable='Grade', variable_card=3,
+    values=[
+        [0.7,0.5,0.4,0.2,0.5,0.3,0.2,0.1],  # A
+        [0.2,0.3,0.4,0.5,0.3,0.4,0.4,0.3],  # B
+        [0.1,0.2,0.2,0.3,0.2,0.3,0.4,0.6]   # C
+    ],
+    evidence=['Intelligence','StudyHours','Difficulty'],
+    evidence_card=[2,2,2]
+)
+
+# Pass CPT
+cpd_P = TabularCPD(
+    variable='Pass', variable_card=2,
+    values=[
+        [0.95, 0.80, 0.50],  # Yes
+        [0.05, 0.20, 0.50]   # No
+    ],
+    evidence=['Grade'],
+    evidence_card=[3]
+)
+
+# Add CPDs
+model.add_cpds(cpd_I, cpd_S, cpd_D, cpd_G, cpd_P)
+
+# Inference
+infer = VariableElimination(model)
+q1 = infer.query(variables=['Pass'],
+                 evidence={'StudyHours': 0, 'Difficulty': 0})
+print(q1)
+
+---------------------------------
+baysian network
+------------------------------
+from pgmpy.models import BayesianNetwork
+from pgmpy.factors.discrete import TabularCPD
+from pgmpy.inference import VariableElimination
+
+# Structure
+model = BayesianNetwork([
+    ('Disease', 'Fever'),
+    ('Disease', 'Cough'),
+    ('Disease', 'Fatigue'),
+    ('Disease', 'Chills')
+])
+
+# Disease prior
+cpd_D = TabularCPD(variable='Disease', variable_card=2,
+                   values=[[0.3], [0.7]])
+
+# Fever
+cpd_F = TabularCPD(variable='Fever', variable_card=2,
+                   values=[[0.9, 0.5],
+                           [0.1, 0.5]],
+                   evidence=['Disease'], evidence_card=[2])
+
+# Cough
+cpd_C = TabularCPD(variable='Cough', variable_card=2,
+                   values=[[0.8, 0.6],
+                           [0.2, 0.4]],
+                   evidence=['Disease'], evidence_card=[2])
+
+# Fatigue
+cpd_Fa = TabularCPD(variable='Fatigue', variable_card=2,
+                    values=[[0.7, 0.3],
+                            [0.3, 0.7]],
+                    evidence=['Disease'], evidence_card=[2])
+
+# Chills
+cpd_Ch = TabularCPD(variable='Chills', variable_card=2,
+                    values=[[0.6, 0.4],
+                            [0.4, 0.6]],
+                    evidence=['Disease'], evidence_card=[2])
+
+model.add_cpds(cpd_D, cpd_F, cpd_C, cpd_Fa, cpd_Ch)
+
+infer = VariableElimination(model)
+
+# Task 1
+print(infer.query(variables=['Disease'],
+      evidence={'Fever':0, 'Cough':0}))
+
+# Task 2
+print(infer.query(variables=['Disease'],
+      evidence={'Fever':0, 'Cough':0, 'Chills':0}))
+
+-----------------------------------
+markoov model (slides)
+--------------------------------
+
+import numpy as np
+# Define the states and transition matrix
+states = ["Red", "Blue"]
+transition_matrix = np.array([[0.5, 0.5], # From Red -> Red or Blue
+[0.5, 0.5]]) # From Blue -> Red or Blue
+
+# Function to simulate the Markov process
+def simulate_markov_process(initial_state, num_steps):
+current_state = initial_state
+state_sequence = [current_state]
+for _ in range(num_steps):
+if current_state == "Red":
+next_state = np.random.choice(states,
+
+p=transition_matrix[0])
+else:
+next_state = np.random.choice(states,
+
+p=transition_matrix[1])
+state_sequence.append(next_state)
+current_state = next_state
+return state_sequence
+# Simulate the process starting from "Red" and for 10 steps
+initial_state = "Red"
+num_steps = 10
+state_sequence = simulate_markov_process(initial_state, num_steps)
+# Output the sequence of states
+print(f"State sequence for {num_steps} steps starting from
+{initial_state}:")
+print(" -> ".join(state_sequence))
+
+--------------------------------------------
+markoov model  question manual
+------------------------------------------
+import numpy as np
+
+states = ["Sunny", "Cloudy", "Rainy"]
+
+transition_matrix = np.array([
+    [0.7, 0.2, 0.1],
+    [0.3, 0.4, 0.3],
+    [0.2, 0.4, 0.4]
+])
+
+def simulate_10_days():
+    current_state = 0
+    rainy_days = 0
+
+    for _ in range(10):
+        next_state = np.random.choice([0, 1, 2], p=transition_matrix[current_state])
+        if next_state == 2:
+            rainy_days += 1
+        current_state = next_state
+
+    return rainy_days
+
+simulations = 10000
+successes = 0
+
+for _ in range(simulations):
+    if simulate_10_days() >= 3:
+        successes += 1
+
+prob = successes / simulations
+print(f"Estimated probability of at least 3 rainy days: {prob:.4f}")
+
+csp 
+from ortools.sat.python import cp_model
+
+model = cp_model.CpModel()
+board_size = 8  # 8x8 chessboard
+
+queens[i] = row of queen in column i
+So queens is a list of 8 variables, one per column
+queens = [model.new_int_var(0, boardsize-1, f"x{i}") for i in range(board_size)]
+
+Constraint 1: All queens in different rows
+model.add_all_different(queens)
+
+Constraint 2: No two queens on same diagonal
+queens[i] - queens[j] != i - j  AND  queens[i] - queens[j] != j - i
+for i in range(board_size):
+    for j in range(i+1, board_size):
+        model.add(queens[i] - queens[j] != i - j)
+        model.add(queens[i] - queens[j] != j - i)
+
+Solve and print — 92 solutions exist for 8-queens!
+solver = cp_model.CpSolver()
+solver.parameters.enumerate_all_solutions = True
+... (solution printer callback, same pattern as before)
+Output: Solutions found: 92
+
+----------------------------
+Csp 
+-----------------------------
+
+from ortools.sat.python import cp_model
+def main() -> None:
+"""Minimal CP-SAT example to showcase calling the solver."""
+# Creates the model.
+model = cp_model.CpModel()
+# Creates the variables.
+var_upper_bound = max(50, 45, 37)
+x = model.new_int_var(0, var_upper_bound, "x")
+y = model.new_int_var(0, var_upper_bound, "y")
+z = model.new_int_var(0, var_upper_bound, "z")
+# Creates the constraints.
+model.add(2 * x + 7 * y + 3 * z <= 50)
+model.add(3 * x - 5 * y + 7 * z <= 45)
+model.add(5 * x + 2 * y - 6 * z <= 37)
+# Defining the Objective function
+model.maximize(2 * x + 2 * y + 3 * z)
+# Creates a solver and solves the model.
+solver = cp_model.CpSolver()
+status = solver.solve(model)
+if status == cp_model.OPTIMAL or status == cp_model.FEASIBLE:
+print(f"Maximum of objective function: {solver.objective_value}\n")
+print(f"x = {solver.value(x)}")
+print(f"y = {solver.value(y)}")
+print(f"z = {solver.value(z)}")
+else:
+print("No solution found.")
+# Statistics.
+print("\nStatistics")
+print(f" status : {solver.status_name(status)}")
+print(f" conflicts: {solver.num_conflicts}")
+print(f" branches : {solver.num_branches}")
+print(f" wall time: {solver.wall_time} s")
+
+main()
+
+
+--------------------------
+min max
+-------------------------
+
+import math
+
+# ---------------- NODE ----------------
+class Node:
+    def __init__(self, value=None):
+        self.value = value
+        self.children = []
+        self.minmax_value = None
+
+
+# ---------------- AGENT ----------------
+class MinimaxAgent:
+    def __init__(self, depth):
+        self.depth = depth
+
+    def formulate_goal(self, node):
+        return "Goal reached" if node.minmax_value is not None else "Searching"
+
+    def act(self, node, environment):
+        goal_status = self.formulate_goal(node)
+
+        if goal_status == "Goal reached":
+            return f"Minimax value for root node: {node.minmax_value}"
+        else:
+            value = environment.compute_minimax(node, self.depth, True)
+            return f"Minimax value for root node: {value}"
+
+
+# ---------------- ENVIRONMENT ----------------
+class Environment:
+    def __init__(self, tree):
+        self.tree = tree
+        self.computed_nodes = []
+
+    def get_percept(self, node):
+        return node
+
+    def compute_minimax(self, node, depth, maximizing_player=True):
+        # Base case (leaf node or depth reached)
+        if depth == 0 or not node.children:
+            self.computed_nodes.append(node.value)
+            return node.value
+
+        if maximizing_player:
+            value = -math.inf
+            for child in node.children:
+                child_value = self.compute_minimax(child, depth - 1, False)
+                value = max(value, child_value)
+            node.minmax_value = value
+            return value
+
+        else:
+            value = math.inf
+            for child in node.children:
+                child_value = self.compute_minimax(child, depth - 1, True)
+                value = min(value, child_value)
+            node.minmax_value = value
+            return value
+
+
+# ---------------- RUN FUNCTION ----------------
+def run_agent(agent, environment, start_node):
+    percept = environment.get_percept(start_node)
+    result = agent.act(percept, environment)
+    print(result)
+
+
+# ---------------- BUILD TREE ----------------
+root = Node('A')
+
+n1 = Node('B')
+n2 = Node('C')
+root.children = [n1, n2]
+
+n3 = Node('D')
+n4 = Node('E')
+n5 = Node('F')
+n6 = Node('G')
+
+n1.children = [n3, n4]
+n2.children = [n5, n6]
+
+# Leaf nodes
+n3.children = [Node(2), Node(3)]
+n4.children = [Node(5), Node(9)]
+n5.children = [Node(0), Node(1)]
+n6.children = [Node(7), Node(5)]
+
+# ---------------- EXECUTION ----------------
+depth = 3
+agent = MinimaxAgent(depth)
+environment = Environment(root)
+
+run_agent(agent, environment, root)
+
+# ---------------- OUTPUT ----------------
+print("\nComputed Leaf Nodes:", environment.computed_nodes)
+
+print("\nMinimax values:")
+print("A:", root.minmax_value)
+print("B:", n1.minmax_value)
+print("C:", n2.minmax_value)
+print("D:", n3.minmax_value)
+print("E:", n4.minmax_value)
+print("F:", n5.minmax_value)
+print("G:", n6.minmax_value)
+
+
+------------------------------
+apha beta pruning 
+------------------------------
+import math
+
+class Node:
+    def __init__(self, value=None):
+        self.value = value
+        self.children = []
+        self.minmax_value = None
+
+
+def alpha_beta(node, depth, alpha, beta, maximizing_player=True):
+    # Base case
+    if depth == 0 or not node.children:
+        return node.value
+
+    if maximizing_player:
+        value = -math.inf
+        for child in node.children:
+            value = max(value, alpha_beta(child, depth-1, alpha, beta, False))
+            alpha = max(alpha, value)
+
+            if beta <= alpha:
+                print("Pruned subtree at:", child.value)
+                break
+
+        node.minmax_value = value
+        return value
+
+    else:
+        value = math.inf
+        for child in node.children:
+            value = min(value, alpha_beta(child, depth-1, alpha, beta, True))
+            beta = min(beta, value)
+
+            if beta <= alpha:
+                print("Pruned subtree at:", child.value)
+                break
+
+        node.minmax_value = value
+        return value
+
+
+# ---------------- TREE ----------------
+root = Node('A')
+
+n1 = Node('B')
+n2 = Node('C')
+root.children = [n1, n2]
+
+n3 = Node('D')
+n4 = Node('E')
+n5 = Node('F')
+n6 = Node('G')
+
+n1.children = [n3, n4]
+n2.children = [n5, n6]
+
+# Leaves
+n3.children = [Node(2), Node(3)]
+n4.children = [Node(5), Node(9)]
+n5.children = [Node(0), Node(2)]
+n6.children = [Node(7), Node(5)]
+
+# ---------------- RUN ----------------
+alpha_beta(root, 3, -math.inf, math.inf)
+
+print("\nMinimax values:")
+print("A:", root.minmax_value)
+print("B:", n1.minmax_value)
+print("C:", n2.minmax_value)
+print("D:", n3.minmax_value)
+print("E:", n4.minmax_value)
+print("F:", n5.minmax_value)
+print("G:", n6.minmax_value)
+
+min max lab task 
+Smart Tic-Tac-Toe Tournament Bot (Minimax + Utility Design)
+import math
+
+def check_terminal(board):
+    win_paths = [
+        [board[0][0], board[0][1], board[0][2]], [board[1][0], board[1][1], board[1][2]], [board[2][0], board[2][1], board[2][2]], # Rows
+        [board[0][0], board[1][0], board[2][0]], [board[0][1], board[1][1], board[2][1]], [board[0][2], board[1][2], board[2][2]], # Cols
+        [board[0][0], board[1][1], board[2][2]], [board[0][2], board[1][1], board[2][0]]  # Diagonals
+    ]
+    if ['X', 'X', 'X'] in win_paths: return 1
+    if ['O', 'O', 'O'] in win_paths: return -1
+    if all(cell != ' ' for row in board for cell in row): return 0
+    return None
+
+def minimax(board, is_maximizing):
+    score = check_terminal(board)
+    if score is not None: return score
+
+    if is_maximizing:
+        best_score = -math.inf
+        for r in range(3):
+            for c in range(3):
+                if board[r][c] == ' ':
+                    board[r][c] = 'X'
+                    best_score = max(best_score, minimax(board, False))
+                    board[r][c] = ' '
+        return best_score
+    else:
+        best_score = math.inf
+        for r in range(3):
+            for c in range(3):
+                if board[r][c] == ' ':
+                    board[r][c] = 'O'
+                    best_score = min(best_score, minimax(board, True))
+                    board[r][c] = ' '
+        return best_score
+
+def get_best_ai_move(board):
+    best_score = -math.inf
+    best_move = None
+    for r in range(3):
+        for c in range(3):
+            if board[r][c] == ' ':
+                board[r][c] = 'X'
+                score = minimax(board, False)
+                board[r][c] = ' '
+                if score > best_score:
+                    best_score = score
+                    best_move = (r, c)
+    print(f"AI chose {best_move} with guaranteed utility of: {best_score}")
+    return best_move
+
+def print_board(board):
+    for row in board:
+        print(" | ".join(row))
+        print("-" * 9)
+
+def play_game():
+    board = [[' ' for _ in range(3)] for _ in range(3)]
+
+    print("Welcome to Tic-Tac-Toe! You are 'O' and the AI is 'X'.")
+    print_board(board)
+
+    while True:
+        try:
+            print("\nYour turn!")
+            row = int(input("Enter row (0, 1, or 2): "))
+            col = int(input("Enter column (0, 1, or 2): "))
+
+            if board[row][col] != ' ':
+                print("That spot is taken! Try again.")
+                continue
+            board[row][col] = 'O'
+
+        except (ValueError, IndexError):
+            print("Invalid input. Please enter numbers 0, 1, or 2.")
+            continue
+
+        print_board(board)
+        if check_terminal(board) is not None:
+            break
+
+        print("\nAI is thinking...")
+        best_move = get_best_ai_move(board)
+
+        if best_move:
+            board[best_move[0]][best_move[1]] = 'X'
+
+        print_board(board)
+        if check_terminal(board) is not None:
+            break
+
+    print("\n--- Game Over ---")
+    result = check_terminal(board)
+    if result == 1:
+        print("The AI Wins! (As expected of Minimax)")
+    elif result == -1:
+        print("You Win! (Wait, this should be impossible!)")
+    else:
+        print("It's a Draw! Good game.")
+
+if __name__ == "__main__":
+    play_game()
+
+Coin-Row Strategy Analyzer (Minimax vs Alpha-Beta Comparison)
+import math
+
+class CoinAnalyzer:
+    def __init__(self):
+        self.nodes_explored = 0
+
+    def minimax(self, coins, is_max):
+        self.nodes_explored += 1
+        if not coins: return 0
+        if len(coins) == 1: return coins[0] if is_max else -coins[0]
+
+        if is_max:
+            left_pick = coins[0] + self.minimax(coins[1:], False)
+            right_pick = coins[-1] + self.minimax(coins[:-1], False)
+            return max(left_pick, right_pick)
+        else:
+            left_pick = -coins[0] + self.minimax(coins[1:], True)
+            right_pick = -coins[-1] + self.minimax(coins[:-1], True)
+            return min(left_pick, right_pick)
+
+    def alpha_beta(self, coins, alpha, beta, is_max, depth=0):
+        self.nodes_explored += 1
+        if not coins: return 0
+        if len(coins) == 1: return coins[0] if is_max else -coins[0]
+
+        if is_max:
+            max_eval = -math.inf
+            # Pick Left
+            eval_left = coins[0] + self.alpha_beta(coins[1:], alpha, beta, False, depth + 1)
+            max_eval = max(max_eval, eval_left)
+            alpha = max(alpha, max_eval)
+            if beta <= alpha:
+                print(f"Pruning at depth {depth}: alpha={alpha}, beta={beta}")
+                return max_eval
+
+            # Pick Right
+            eval_right = coins[-1] + self.alpha_beta(coins[:-1], alpha, beta, False, depth + 1)
+            max_eval = max(max_eval, eval_right)
+            return max_eval
+        else:
+
+            min_eval = math.inf
+            eval_left = -coins[0] + self.alpha_beta(coins[1:], alpha, beta, True, depth + 1)
+            min_eval = min(min_eval, eval_left)
+            beta = min(beta, min_eval)
+            if beta <= alpha:
+                print(f"Pruning at depth {depth}: alpha={alpha}, beta={beta}")
+                return min_eval
+
+            eval_right = -coins[-1] + self.alpha_beta(coins[:-1], alpha, beta, True, depth + 1)
+            min_eval = min(min_eval, eval_right)
+            return min_eval
+
+coins = [6, 2, 9, 4, 7, 3, 8, 5]
+analyzer = CoinAnalyzer()
+print("Minimax Score:", analyzer.minimax(coins, True))
+print("Nodes Explored:", analyzer.nodes_explored)
+
+Cyber Defense Move Planner (Depth-Limited Minimax + Heuristic)
+import math
+
+def heuristic(state):
+    return (2 * state['health']) - (8 * state['intrusion']) - (5 * state['vulns']) + (3 * state['resources'])
+
+def simulate_action(state, action, is_defender):
+
+    new_state = state.copy()
+    if action == 'patch': new_state['vulns'] = max(0, new_state['vulns'] - 2)
+
+    return new_state
+
+def cyber_minimax(state, depth, is_defender):
+    if depth == 0 or state['health'] <= 0:
+        return heuristic(state)
+
+    legal_actions = ['attack', 'patch', 'isolate', 'scan']
+
+    if is_defender:
+        best_val = -math.inf
+        for action in legal_actions:
+            new_state = simulate_action(state, action, True)
+            eval_val = cyber_minimax(new_state, depth - 1, False)
+            best_val = max(best_val, eval_val)
+        return best_val
+    else:
+        best_val = math.inf
+        for action in legal_actions:
+            new_state = simulate_action(state, action, False)
+            eval_val = cyber_minimax(new_state, depth - 1, True)
+            best_val = min(best_val, eval_val)
+        return best_val
+
+-------------------------------------------
+Mini Chess Engine Prototype (Minimax + Alpha-Beta + Evaluation Function)
+--------------------------------------------
+
+import chess
+import math
+import time
+import random
+
+class MiniChessEngine:
+    def __init__(self, depth=3):
+        self.depth = depth
+        self.nodes_explored = 0
+
+        # Base material values
+        self.piece_values = {
+            chess.PAWN: 1,
+            chess.KNIGHT: 3,
+            chess.BISHOP: 3,
+            chess.ROOK: 5,
+            chess.QUEEN: 9,
+            chess.KING: 1000 # Very large value
+        }
+
+        self.center_squares = {chess.D4, chess.E4, chess.D5, chess.E5}
+
+    def evaluate_board(self, board):
+        """
+        Calculates the static evaluation of the board.
+        Positive scores favor White (Max), Negative scores favor Black (Min).
+        """
+        # Terminal states
+        if board.is_checkmate():
+            return -9999 if board.turn == chess.WHITE else 9999
+        if board.is_stalemate() or board.is_insufficient_material():
+            return 0
+
+        score = 0.0
+
+        # 1. Material & Positional Evaluation
+        for square in chess.SQUARES:
+            piece = board.piece_at(square)
+            if piece:
+                val = self.piece_values[piece.piece_type]
+
+                if square in self.center_squares:
+                    val += 0.2
+
+                if piece.piece_type == chess.KING and square in self.center_squares:
+                    val -= 0.5
+
+                score += val if piece.color == chess.WHITE else -val
+
+        # 2. Piece Mobility (Bonus for having more legal moves)
+        mobility_bonus = len(list(board.legal_moves)) * 0.02
+        score += mobility_bonus if board.turn == chess.WHITE else -mobility_bonus
+
+        return score
+
+    def order_moves(self, board):
+        """Orders moves to maximize Alpha-Beta pruning efficiency."""
+        moves = list(board.legal_moves)
+
+        def move_score(move):
+            score = 0
+            if board.is_capture(move): score += 10
+            if board.gives_check(move): score += 5
+            if board.is_promotion(move): score += 8
+            return score
+
+        moves.sort(key=move_score, reverse=True)
+        return moves
+
+    def alpha_beta(self, board, depth, alpha, beta, is_max):
+        self.nodes_explored += 1
+
+        if depth == 0 or board.is_game_over():
+            return self.evaluate_board(board)
+
+        moves = self.order_moves(board)
+
+        if is_max: # White's turn
+            max_eval = -math.inf
+            for move in moves:
+                board.push(move)
+                eval_val = self.alpha_beta(board, depth - 1, alpha, beta, False)
+                board.pop()
+                max_eval = max(max_eval, eval_val)
+                alpha = max(alpha, eval_val)
+                if beta <= alpha:
+                    break # Beta cutoff
+            return max_eval
+        else: # Black's turn (AI)
+            min_eval = math.inf
+            for move in moves:
+                board.push(move)
+                eval_val = self.alpha_beta(board, depth - 1, alpha, beta, True)
+                board.pop()
+                min_eval = min(min_eval, eval_val)
+                beta = min(beta, min_eval)
+                if beta <= alpha:
+                    break # Alpha cutoff
+            return min_eval
+
+    def get_best_move(self, board):
+        """Returns the best move, the evaluation score, nodes explored, and time taken."""
+        self.nodes_explored = 0
+        start_time = time.time()
+
+        best_move = None
+        is_max = board.turn == chess.WHITE
+
+        best_val = -math.inf if is_max else math.inf
+        alpha = -math.inf
+        beta = math.inf
+
+        for move in self.order_moves(board):
+            board.push(move)
+            board_val = self.alpha_beta(board, self.depth - 1, alpha, beta, not is_max)
+            board.pop()
+
+            if is_max:
+                if board_val > best_val:
+                    best_val = board_val
+                    best_move = move
+                alpha = max(alpha, best_val)
+            else:
+                if board_val < best_val:
+                    best_val = board_val
+                    best_move = move
+                beta = min(beta, best_val)
+
+        decision_time = time.time() - start_time
+        return best_move, best_val, self.nodes_explored, decision_time
+
+def run_ai_vs_random_tournament(games=5):
+    print(f"--- Starting {games}-Game Tournament: Random (White) vs AI (Black) ---")
+    engine = MiniChessEngine(depth=3)
+
+    results = {'AI_Wins': 0, 'Random_Wins': 0, 'Draws': 0}
+    total_nodes = 0
+    total_time = 0
+    total_ai_moves = 0
+
+    for i in range(games):
+        board = chess.Board()
+        print(f"\nGame {i+1} starting...")
+
+        while not board.is_game_over():
+            if board.turn == chess.WHITE:
+                # Random bot plays White
+                move = random.choice(list(board.legal_moves))
+                board.push(move)
+            else:
+                # Engine plays Black
+                move, score, nodes, time_taken = engine.get_best_move(board)
+                board.push(move)
+
+                total_nodes += nodes
+                total_time += time_taken
+                total_ai_moves += 1
+
+        # Game over logic
+        result = board.result()
+        if result == "1-0":
+            results['Random_Wins'] += 1
+            print("Winner: Random (White)")
+        elif result == "0-1":
+            results['AI_Wins'] += 1
+            print("Winner: AI (Black)")
+        else:
+            results['Draws'] += 1
+            print("Result: Draw")
+
+    print("\n--- Tournament Results ---")
+    print(f"Record (AI Wins - Random Wins - Draws): {results['AI_Wins']} - {results['Random_Wins']} - {results['Draws']}")
+    if total_ai_moves > 0:
+        print(f"Average Nodes Explored Per AI Move: {total_nodes // total_ai_moves}")
+        print(f"Average Time Per AI Move: {total_time / total_ai_moves:.3f} seconds")
+
+def play_human_vs_ai():
+    board = chess.Board()
+    engine = MiniChessEngine(depth=3)
+
+    print("\n--- Human (White) vs AI (Black) ---")
+    print("Enter moves in UCI format (e.g., 'e2e4', 'g1f3'). Type 'quit' to exit.")
+
+    while not board.is_game_over():
+        print(f"\n{board}")
+        if board.turn == chess.WHITE:
+            human_move = input("\nYour move: ")
+            if human_move.lower() == 'quit':
+                break
+            try:
+                move = chess.Move.from_uci(human_move)
+                if move in board.legal_moves:
+                    board.push(move)
+                else:
+                    print("Illegal move. Try again.")
+            except ValueError:
+                print("Invalid format. Use UCI format like 'e2e4'.")
+        else:
+            print("\nAI is thinking...")
+            move, score, nodes, time_taken = engine.get_best_move(board)
+            print(f"AI chose: {move} | Eval Score: {score:.2f} | Nodes Explored: {nodes} | Time: {time_taken:.2f}s")
+            board.push(move)
+
+    print("\nGame Over!")
+    print("Result:", board.result())
+
+if __name__ == "__main__":
+    # 1. Run the automated tournament against the random bot (Requirement 4)
+    run_ai_vs_random_tournament(games=5)
+
+    # 2. Uncomment the line below to play against the AI yourself (Requirement 5)
+    # play_human_vs_ai()
+
+
+-------------------------------
+EDA
+-------------------------------
+
+Imports:
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+%matplotlib inline
+import warnings
+warnings.filterwarnings('ignore')
+df_mat = pd.read_csv('/student-mat.csv', delimiter=';')
+df_por = pd.read_csv('/student-por.csv', delimiter=';')
+
+Check head:
+df_mat.head()
+
+Checking Missing Values:
+
+df_por.isna().sum()
+
+Check Missing values:
+
+
+Check Duplicates rows:
+
+df_por.duplicated().sum()
+
+Check data type:
+
+df_mat.info()
+
+Check the number of unique values of each column:
+
+df_mat.nunique()
+
+Check statistics of data set:
+
+df_mat.describe()
+
+
+Check various categories present in the different categorical column:
+
+for column in df_por.columns:
+    print(f"Categories in {column} variable:     ",end=" " )
+    print(df_por[column].unique())
+
+Defining Numeric and Categorical Columns:
+
+numeric_features = [feature for feature in df_mat.columns if df_mat[feature].dtype != 'O']
+categorical_features = [feature for feature in df_mat.columns if df_mat[feature].dtype == 'O']
+
+print('We have {} numerical features : {}'.format(len(numeric_features), numeric_features))
+print('\nWe have {} categorical features : {}'.format(len(categorical_features), categorical_features))
+
+Adding columns
+
+df_por['total score'] = df_por['G1'] + df_por['G2']
+df_por['average'] = df_por['total score']/2
+df_por.head()
+
+
+from sklearn.metrics import mutual_info_score
+# function that computes the mutual infomation score between a categorical serie and the column Churn
+def compute_mutual_information(categorical_serie):
+    return mutual_info_score(categorical_serie, df_por.G3)
+
+# select categorial variables excluding the response variable
+categorical_variables = df_por.select_dtypes(include=object)
+
+# compute the mutual information score between each categorical variable and the target
+feature_importance = categorical_variables.apply(compute_mutual_information).sort_values(ascending=False)
+
+# visualize feature importance
+print(feature_importance)
+
+plt.subplots(1,3,figsize=(25,6))
+plt.subplot(141)
+ax =sns.histplot(data=df_por,x='average',kde=True,hue='studytime')
+plt.subplot(142)
+ax =sns.histplot(data=df_por[df_por.sex=='M'],x='G3',kde=True,hue='studytime')
+plt.subplot(143)
+ax =sns.histplot(data=df_por[df_por.sex=='F'],x='average',kde=True,hue='studytime')
+plt.show()
+
+sns.violinplot(y='G1', data=df_por, linewidth=3)
+
+size = df_por['sex'].value_counts()
+labels = size.index
+plt.pie(size, labels=labels, autopct='%1.2f%%')
+plt.title('Gender (Sex)', fontsize=20)
+plt.axis('off')
+
+
+#univariate
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+f, ax = plt.subplots(1, 2, figsize=(20, 10))
+# Countplot
+
+f, ax = plt.subplots(1, 2, figsize=(20, 10))
+sns.countplot(x='sex', data=df_por, palette='bright', ax=ax[0], saturation=0.95)
+
+for container in ax[0].containers:
+    ax[0].bar_label(container, color='black', size=14)
+
+ax[0].set_title("Gender Count")
+
+# Pie chart
+size = df_por['sex'].value_counts()
+ax[1].pie(size, labels=size.index, explode=[0, 0.1],
+          autopct='%1.1f%%', shadow=True)
+
+ax[1].set_title("Gender Distribution")
+
+plt.tight_layout()
+plt.show()
+
+#bivariate
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+Group_data2 = df_por.groupby('sex')
+
+f, ax = plt.subplots(1, 3, figsize=(20, 8))
+
+# G1
+sns.barplot(x=Group_data2['G1'].mean().index,
+            y=Group_data2['G1'].mean().values,
+            palette='mako', ax=ax[0])
+
+ax[0].set_title('G1 Score', color='#005ce6', size=20)
+
+for container in ax[0].containers:
+    ax[0].bar_label(container, color='black', size=12)
+
+
+# G2
+sns.barplot(x=Group_data2['G2'].mean().index,
+            y=Group_data2['G2'].mean().values,
+            palette='flare', ax=ax[1])
+
+ax[1].set_title('G2 Score', color='#005ce6', size=20)
+
+for container in ax[1].containers:
+    ax[1].bar_label(container, color='black', size=12)
+
+
+# G3
+sns.barplot(x=Group_data2['G3'].mean().index,
+            y=Group_data2['G3'].mean().values,
+            palette='coolwarm', ax=ax[2])
+
+ax[2].set_title('G3 Score', color='#005ce6', size=20)
+
+for container in ax[2].containers:
+    ax[2].bar_label(container, color='black', size=12)
+
+plt.tight_layout()
+plt.show()
+
+#barplot
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+plt.figure(figsize=(12, 10))
+
+# G1
+plt.subplot(2,2,1)
+sns.barplot(x='studytime', y='G1', hue='sex', data=df_por)
+plt.title("G1 vs Studytime")
+
+# G2
+plt.subplot(2,2,2)
+sns.barplot(x='studytime', y='G2', hue='sex', data=df_por)
+plt.title("G2 vs Studytime")
+
+# G3
+plt.subplot(2,2,3)
+sns.barplot(x='studytime', y='G3', hue='sex', data=df_por)
+plt.title("G3 vs Studytime")
+
+plt.tight_layout()
+plt.show()
+
+
+-------------------------------
+supervised learning regression 
+----------------------------------
+
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+# Split the data into training and testing sets
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2,
+random_state=42)
+# Create and train the Linear Regression model
+LR = LinearRegression()
+ModelLR = LR.fit(x_train, y_train)
+# Predict on the test data
+PredictionLR = ModelLR.predict(x_test)
+# Print the predictions
+print(&quot;Predictions:&quot;, PredictionLR)
+
+decision tree
+from sklearn.tree import DecisionTreeClassifier
+# Initialize the DecisionTreeClassifier
+DT = DecisionTreeClassifier()
+# Train the model
+ModelDT = DT.fit(x_train, y_train)
+# Model Testing (Prediction)
+PredictionDT = DT.predict(x_test)
+print(&quot;Predictions:&quot;, PredictionDT)
+# Model Training Accuracy
+print(&#39;====================DT Training Accuracy===============&#39;)
+tracDT = DT.score(x_train, y_train) # The score method gives accuracy
+directly
+TrainingAccDT = tracDT * 100
+print(f&quot;Training Accuracy: {TrainingAccDT:.2f}%&quot;)
+# Model Testing Accuracy
+print(&#39;=====================DT Testing Accuracy=================&#39;)
+teacDT = accuracy_score(y_test, PredictionDT)
+testingAccDT = teacDT * 100
+print(f&quot;Testing Accuracy: {testingAccDT:.2f}%&quot;)
+
+-------------------
+kfold 
+---------------------
+-
+from sklearn.model_selection import KFold
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+import numpy as np
+import pandas as pd
+import seaborn as sns
+# Load dataset
+df = sns.load_dataset(&quot;titanic&quot;)
+# Select features and target, handling missing values
+X = df[[&#39;age&#39;, &#39;fare&#39;]].fillna(df[[&#39;age&#39;, &#39;fare&#39;]].mean())
+y = df[&#39;survived&#39;]
+# Convert to DataFrame to use .iloc[]
+X = pd.DataFrame(X)
+y = pd.Series(y)
+# Define K-Fold (5 splits)
+kf = KFold(n_splits=5, shuffle=True, random_state=42)
+# Initialize model
+model = LogisticRegression()
+model = LogisticRegression()
+# Store accuracy scores
+accuracy_scores = []
+# Perform K-Fold CV
+for train_index, test_index in kf.split(X):
+X_train, X_test = X.iloc[train_index], X.iloc[test_index] # Now X is a
+DataFrame
+y_train, y_test = y.iloc[train_index], y.iloc[test_index] # Now y is a
+Series
+# Train model
+model.fit(X_train, y_train)
+# Predict and evaluate
+y_pred = model.predict(X_test)
+acc = accuracy_score(y_test, y_pred)
+accuracy_scores.append(acc)
+# Print average accuracy
+print(&quot;K-Fold CV Average Accuracy:&quot;, np.mean(accuracy_scores))
+
+--------------------
+lab task 1
+-------------------------
+
+# Import libraries
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+# Load dataset
+df = pd.read_csv("house_data.csv")
+
+# Handle missing values
+df.fillna(df.mean(numeric_only=True), inplace=True)
+df.fillna(df.mode().iloc[0], inplace=True)
+
+# Features & target
+X = df.drop("price", axis=1)
+y = df["price"]
+
+# Identify categorical & numerical columns
+categorical_cols = ["neighborhood"]
+numerical_cols = X.drop(columns=categorical_cols).columns
+
+# Preprocessing
+preprocessor = ColumnTransformer([
+    ("num", StandardScaler(), numerical_cols),
+    ("cat", OneHotEncoder(handle_unknown="ignore"), categorical_cols)
+])
+
+# Pipeline
+model = Pipeline([
+    ("preprocessing", preprocessor),
+    ("regressor", LinearRegression())
+])
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train
+model.fit(X_train, y_train)
+
+# Predict
+y_pred = model.predict(X_test)
+
+# Evaluation
+print("MAE:", mean_absolute_error(y_test, y_pred))
+print("MSE:", mean_squared_error(y_test, y_pred))
+print("RMSE:", np.sqrt(mean_squared_error(y_test, y_pred)))
+print("R2 Score:", r2_score(y_test, y_pred))
+
+# Predict new house
+new_house = pd.DataFrame({
+    "bedrooms": [3],
+    "bathrooms": [2],
+    "sqft": [1800],
+    "age": [10],
+    "neighborhood": ["A"]
+})
+
+predicted_price = model.predict(new_house)
+print("Predicted Price:", predicted_price[0])
+
+-------------------------
+lab task 2
+----------------------------------
+ 
+# Import libraries
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, classification_report
+import joblib
+
+# Load dataset
+df = pd.read_csv("emails.csv")  # columns: text, label
+
+# Features & target
+X = df["text"]
+y = df["label"]
+
+# Convert text to numeric (TF-IDF)
+vectorizer = TfidfVectorizer(stop_words="english")
+X_vectorized = vectorizer.fit_transform(X)
+
+# Split
+X_train, X_test, y_train, y_test = train_test_split(X_vectorized, y, test_size=0.2, random_state=42)
+
+# Train model
+model = MultinomialNB()
+model.fit(X_train, y_train)
+
+# Predict
+y_pred = model.predict(X_test)
+
+# Evaluation
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print(classification_report(y_test, y_pred))
+
+# Save model
+joblib.dump(model, "spam_model.pkl")
+joblib.dump(vectorizer, "vectorizer.pkl")
+
+# Predict new email
+new_email = ["Congratulations! You won a free iPhone. Click here now!"]
+new_email_vec = vectorizer.transform(new_email)
+prediction = model.predict(new_email_vec)
+
+print("Spam Prediction:", prediction[0])  # 1 = spam, 0 = not spam
+
+---------------------------
+lab task 3
+-----------------------------
+ 
+# Import libraries
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+# Load dataset
+df = pd.read_csv("customers.csv")
+
+# Handle missing values
+df.fillna(df.mean(numeric_only=True), inplace=True)
+
+# Remove outliers (simple IQR method)
+Q1 = df.quantile(0.25)
+Q3 = df.quantile(0.75)
+IQR = Q3 - Q1
+df = df[~((df < (Q1 - 1.5 * IQR)) | (df > (Q3 + 1.5 * IQR))).any(axis=1)]
+
+# Features & target
+X = df.drop("label", axis=1)  # label: 1=high, 0=low
+y = df["label"]
+
+# Feature scaling
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+
+# Train SVM
+model = SVC(kernel="linear")
+model.fit(X_train, y_train)
+
+# Hyperplane parameters
+print("Weights (w):", model.coef_)
+print("Bias (b):", model.intercept_)
+
+# Predict
+y_pred = model.predict(X_test)
+
+# Evaluation
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+print("Report:\n", classification_report(y_test, y_pred))
+
+# Rule example (manual interpretation)
+def classify_customer(spending, visits, frequency):
+    if spending > 50000 and visits > 10:
+        return "High Value"
+    elif frequency < 3:
+        return "Low Value"
+    else:
+        return "Medium/Depends"
+
+print(classify_customer(60000, 12, 5))
+
+---------------------------------
+k means clussteing 
+----------------------------------
+
+#importing libraries    
+import numpy as nm    
+import matplotlib.pyplot as mtp    
+import pandas as pd
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+
+
+
+# Importing the dataset  
+df = pd.read_csv('Mall_Customers.csv')
+df.head()
+
+# Extracting Variables
+x = df.iloc[:, [3, 4]].values  
+
+#finding optimal number of clusters using the elbow method  
+from sklearn.cluster import KMeans  
+wcss_list= []  #Initializing the list for the values of WCSS  
+ 
+#Using for loop for iterations from 1 to 10.  
+for i in range(1, 11):  
+    kmeans = KMeans(n_clusters=i, init='k-means++', random_state= 42) 
+kmeans.fit(x)  
+    wcss_list.append(kmeans.inertia_)  
+mtp.plot(range(1, 11), wcss_list)  
+mtp.title('The Elobw Method Graph')  
+mtp.xlabel('Number of clusters(k)')  
+mtp.ylabel('wcss_list')  
+mtp.show()  
+
+# Normalize features for better clustering
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(x)
+
+#training the K-means model on a dataset  
+kmeans = KMeans(n_clusters=5, init='k-means++', random_state= 42)  
+y_predict= kmeans.fit_predict(X_scaled)  
+
+
+#visulaizing the clusters  
+mtp.scatter(x[y_predict == 0, 0], x[y_predict == 0, 1], s = 100, c = 'blue', label = 'Cluster 1') #for first cluster  
+mtp.scatter(x[y_predict == 1, 0], x[y_predict == 1, 1], s = 100, c = 'green', label = 'Cluster 2') #for second cluster  
+mtp.scatter(x[y_predict== 2, 0], x[y_predict == 2, 1], s = 100, c = 'red', label = 'Cluster 3') #for third cluster  
+mtp.scatter(x[y_predict == 3, 0], x[y_predict == 3, 1], s = 100, c = 'black', label = 'Cluster 4') #for fourth cluster  
+mtp.scatter(x[y_predict == 4, 0], x[y_predict == 4, 1], s = 100, c = 'purple', label = 'Cluster 5') #for fifth cluster  
+mtp.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], s = 300, c = 'yellow', label = 'Centroid')  
+mtp.title('Clusters of customers')  
+mtp.xlabel('Annual Income (k$)')  
+mtp.ylabel('Spending Score (1-100)')  
+mtp.legend()  
+mtp.show() 
+
